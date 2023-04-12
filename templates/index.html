@@ -1,0 +1,53 @@
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+            integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+            crossorigin="anonymous"></script>
+    <style>
+        .button {
+            margin: 5px;
+            padding: 5px;
+            background: green;
+        }
+        #takeOverAcceptButton, #takeOverButton {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div>Hoi, jouw naam is {{ name }}</div>
+<div>Je bekijkt nu ordernummer: {{ order_number }}</div>
+<div id="inControl">Op dit moment ben jij in controle</div>
+<span id="takeOverButton" class="button">
+    Wil je deze order overnemen?
+</span>
+<span id="takeOverAcceptButton" class="button"></span>
+</body>
+    <script type="text/javascript" charset="utf-8">
+        var socket = io();
+        const inControl = document.getElementById('inControl');
+        const takeOverButton = document.getElementById('takeOverButton');
+        const takeOverAcceptButton = document.getElementById('takeOverAcceptButton');
+        socket.on("take_over_request", (data) =>{
+            const user = data['client']['name'];
+            takeOverAcceptButton.innerHTML = user + ' Wilt graag deze order overnemen, accepteren?';
+            takeOverAcceptButton.style.display = 'inline-block';
+        })
+
+        function takeOverRequest() {
+            socket.emit('take_over_request', {data: "{{ order_number }}"});
+        }
+
+        socket.on("take_over_possible", (data) => {
+            inControl.innerHTML = 'Op dit moment is ' + data['current_client'] + ' aan de leiding.';
+            takeOverButton.style.display = 'inline-block';
+            takeOverButton.addEventListener('click', takeOverRequest);
+        });
+
+        window.onload = function () {
+            const userName = "{{ name }}";
+            const orderNumber = "{{ order_number }}";
+            socket.emit('visit_order', {"order_number": orderNumber, "user_name": userName})
+        }
+    </script>
+</html>
