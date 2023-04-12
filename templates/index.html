@@ -28,11 +28,18 @@
         const inControl = document.getElementById('inControl');
         const takeOverButton = document.getElementById('takeOverButton');
         const takeOverAcceptButton = document.getElementById('takeOverAcceptButton');
+        let takeOverClient = null;
+        takeOverAcceptButton.addEventListener('click', takeOverAccept)
         socket.on("take_over_request", (data) =>{
             const user = data['client']['name'];
+            takeOverClient = data['client'];
             takeOverAcceptButton.innerHTML = user + ' Wilt graag deze order overnemen, accepteren?';
             takeOverAcceptButton.style.display = 'inline-block';
         })
+
+        function takeOverAccept() {
+            socket.emit('take_over_accept', {data: "{{ order_number }}", client: takeOverClient});
+        }
 
         function takeOverRequest() {
             socket.emit('take_over_request', {data: "{{ order_number }}"});

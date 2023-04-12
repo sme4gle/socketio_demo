@@ -33,11 +33,6 @@ if __name__ == '__main__':
     socketio.run(app)
 
 
-@socketio.on('message')
-def handle_message(data):
-    print(f'message: {data}')
-
-
 @socketio.on('visit_order')
 def check_order(data):
     global order_list
@@ -64,7 +59,6 @@ def check_order(data):
         order_list[order] = [client]
 
 
-
 @socketio.on('take_over_request')
 def take_over_request(data):
     global client_list
@@ -72,6 +66,12 @@ def take_over_request(data):
     order_initiator = get_order_initiator(order_number)
     client = get_current_client()
     emit('take_over_request', {"client": client}, room=order_initiator['id'])
+
+
+@socketio.on('take_over_accept')
+def take_over_accept(data):
+    global order_list
+    print(data, 'data')
 
 
 def check_user_is_in_order(client: Client, room: int) -> bool:
