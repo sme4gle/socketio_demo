@@ -38,7 +38,7 @@
         })
 
         function takeOverAccept() {
-            socket.emit('take_over_accept', {data: "{{ order_number }}", client: takeOverClient});
+            socket.emit('take_over_accept', {data: takeOverClient});
         }
 
         function takeOverRequest() {
@@ -50,6 +50,20 @@
             takeOverButton.style.display = 'inline-block';
             takeOverButton.addEventListener('click', takeOverRequest);
         });
+
+        socket.on('take_over_completed', (data) => {
+            if (data['name'] == "{{ name }}") {
+                // This is us.
+                console.log("We are in charge")
+                takeOverButton.style.display = 'none';
+                inControl.innerHTML = 'Op dit moment ben jij in controle'
+            } else {
+                // this is someone else who has taken over
+                console.log("Weggegeven")
+                inControl.innerHTML = 'Op dit moment is ' + data['name'] + ' aan de leiding.';
+                takeOverAcceptButton.style.display = 'none';
+            }
+        })
 
         window.onload = function () {
             const userName = "{{ name }}";
