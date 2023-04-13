@@ -49,7 +49,6 @@ def check_order(data):
     else:
         client['initiator'] = True
         client_list.append(client)
-    print(client_list)
 
 
 @socketio.on('take_over_request')
@@ -57,7 +56,6 @@ def take_over_request(data):
     global client_list
     order_number = session['order_number']
     initiator = get_order_initiator(order_number)
-    print(initiator, 'initiator')
     client = get_client(session['name'])
     emit('take_over_request', {"client": client}, room=initiator['id'])
 
@@ -66,15 +64,14 @@ def take_over_request(data):
 def take_over_accept(data):
     global client_list
     client = data['data']
-    get_client(client['name'])['initiator'] = True
     initiator = get_order_initiator(session['order_number'])
     initiator['initiator'] = False
+    get_client(client['name'])['initiator'] = True
 
     # Send headsup to overtaker
     emit('take_over_completed', client, room=get_client(client['name'])['id'])
 
     # Send headsup to OG initiator
-    print(get_client(session['name']), 'dingetje')
     emit('take_over_completed', client, room=get_client(session['name'])['id'])
 
 
