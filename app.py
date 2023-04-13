@@ -9,7 +9,7 @@ from flask_socketio import SocketIO, emit
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'superSecret!'
 app.debug = True
-socketio = SocketIO(app)
+socketio = SocketIO(app, host="0.0.0.0")
 
 
 class Client(TypedDict):
