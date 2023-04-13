@@ -40,6 +40,7 @@ if __name__ == '__main__':
 @socketio.on('visit_order')
 def check_order(data):
     global client_list
+    print(client_list)
     order = session['order_number']
     client = bake_client()
     initiator = get_order_initiator(order)
@@ -52,7 +53,7 @@ def check_order(data):
     else:
         client['initiator'] = True
         client_list.append(client)
-
+    print(client_list)
 
 @socketio.on('take_over_request')
 def take_over_request(data):
