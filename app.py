@@ -1,6 +1,9 @@
+import os
 from typing import TypedDict
 
-from flask import Flask, render_template, request, session
+import sqlite3
+
+from flask import Flask, render_template, request, session, g
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
@@ -17,7 +20,7 @@ class Client(TypedDict):
     order_number: int
 
 
-client_list: list[Client] = []
+clients: list[Client] = []
 
 
 @app.route('/', defaults={'name': 'Jan', 'order_number': 100})
@@ -35,8 +38,7 @@ if __name__ == '__main__':
 
 
 @socketio.on('visit_order')
-def check_order(data):
-    global client_list
+def check_order(data, client_list: list[Client] = clients):
     order = session['order_number']
     client = bake_client()
     initiator = get_order_initiator(order)
@@ -53,7 +55,6 @@ def check_order(data):
 
 @socketio.on('take_over_request')
 def take_over_request(data):
-    global client_list
     order_number = session['order_number']
     initiator = get_order_initiator(order_number)
     client = get_client(session['name'])
@@ -62,7 +63,6 @@ def take_over_request(data):
 
 @socketio.on('take_over_accept')
 def take_over_accept(data):
-    global client_list
     client = data['data']
     initiator = get_order_initiator(session['order_number'])
     initiator['initiator'] = False
@@ -75,15 +75,13 @@ def take_over_accept(data):
     emit('take_over_completed', client, room=get_client(session['name'])['id'])
 
 
-def check_user_in_user_list(name: str) -> Client | None:
-    global client_list
+def check_user_in_user_list(name: str, client_list: list[Client] = clients) -> Client | None:
     # This should in theory only return one single Client.
     client = [c for c in client_list if c['name'] == name]
     return client if client else None
 
 
-def get_order_initiator(order: int) -> Client | None:
-    global client_list
+def get_order_initiator(order: int, client_list: list[Client] = clients) -> Client | None:
     clients = [c for c in client_list if c['order_number'] == order and c['initiator']]
     if clients:
         return clients[0]
@@ -91,12 +89,11 @@ def get_order_initiator(order: int) -> Client | None:
         return False
 
 
-def get_client(name: str) -> Client:
-    global client_list
+def get_client(name: str, client_list: list[Client] = clients) -> Client:
     return [c for c in client_list if c['name'] == name][0]
 
 
-def bake_client() -> Client:
+def bake_client(client_list: list[Client] = clients) -> Client:
     client = [c for c in client_list if c['name'] == session['name']]
     if client:
         client[0]['id'] = request.sid
