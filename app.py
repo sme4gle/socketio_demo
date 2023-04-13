@@ -9,7 +9,7 @@ from flask_socketio import SocketIO, emit
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'superSecret!'
 app.debug = True
-socketio = SocketIO(app, host="0.0.0.0")
+socketio = SocketIO(app)
 
 
 class Client(TypedDict):
@@ -20,7 +20,7 @@ class Client(TypedDict):
     order_number: int
 
 
-clients: list[Client] = []
+client_list: list[Client] = []
 
 
 @app.route('/', defaults={'name': 'Jan', 'order_number': 100})
@@ -34,11 +34,12 @@ def index(name: str, order_number: int):  # put application's code here.
 
 if __name__ == '__main__':
     # app.run()
-    socketio.run(app)
+    socketio.run(app, host="0.0.0.0")
 
 
 @socketio.on('visit_order')
-def check_order(data, client_list: list[Client] = clients):
+def check_order(data):
+    global client_list
     order = session['order_number']
     client = bake_client()
     initiator = get_order_initiator(order)
@@ -75,13 +76,15 @@ def take_over_accept(data):
     emit('take_over_completed', client, room=get_client(session['name'])['id'])
 
 
-def check_user_in_user_list(name: str, client_list: list[Client] = clients) -> Client | None:
+def check_user_in_user_list(name: str) -> Client | None:
+    global client_list
     # This should in theory only return one single Client.
     client = [c for c in client_list if c['name'] == name]
     return client if client else None
 
 
-def get_order_initiator(order: int, client_list: list[Client] = clients) -> Client | None:
+def get_order_initiator(order: int) -> Client | None:
+    global client_list
     clients = [c for c in client_list if c['order_number'] == order and c['initiator']]
     if clients:
         return clients[0]
@@ -89,11 +92,13 @@ def get_order_initiator(order: int, client_list: list[Client] = clients) -> Clie
         return False
 
 
-def get_client(name: str, client_list: list[Client] = clients) -> Client:
+def get_client(name: str) -> Client:
+    global client_list
     return [c for c in client_list if c['name'] == name][0]
 
 
-def bake_client(client_list: list[Client] = clients) -> Client:
+def bake_client() -> Client:
+    global client_list
     client = [c for c in client_list if c['name'] == session['name']]
     if client:
         client[0]['id'] = request.sid
